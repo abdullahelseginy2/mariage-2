@@ -17,6 +17,9 @@ export const LOCALIZED_SECTIONS = new Set([
 
 const SHARED_FIELD_PATHS = new Set([
   'public_path',
+  'requester_name',
+  'requester_whatsapp',
+  'order_date',
   'hero.is_enabled',
   'event.is_enabled',
   'love_story.is_enabled',
@@ -93,9 +96,13 @@ export const createEmptyForm = () => ({
   groom_name: { en: '', ar: '' },
   bride_name: { en: '', ar: '' },
   couple_display_name: { en: '', ar: '' },
+  requester_name: '',
+  requester_whatsapp: '',
+  order_date: new Date().toISOString().slice(0, 10),
   public_path: '',
   template: 'classic',
   font_family: 'elegant',
+  font_sizes: {},
   locale: 'en',
   is_published: true,
   organizer_username: '',
@@ -209,9 +216,15 @@ export const hydrateInvitation = (invitation) => {
         },
     organizer_username: invitation.organizer_username || '',
     organizer_password: invitation.organizer_password || '',
+    requester_name: invitation.requester_name || '',
+    requester_whatsapp: invitation.requester_whatsapp || '',
+    order_date: invitation.order_date || '',
     public_path: invitation.public_path || '',
     template: invitation.template || 'classic',
     font_family: invitation.font_family || 'elegant',
+    font_sizes: invitation.font_sizes && typeof invitation.font_sizes === 'object'
+      ? { ...invitation.font_sizes }
+      : {},
     locale: invitation.locale === 'ar' ? 'ar' : 'en',
     is_published: invitation.is_published ?? true,
     loading: hydrateLocalizedSection(invitation.loading, base.loading, (value) => value),
@@ -315,9 +328,17 @@ export const serializeInvitation = (form) => {
     },
     organizer_username: form.organizer_username,
     organizer_password: form.organizer_password,
+    requester_name: form.requester_name || '',
+    requester_whatsapp: form.requester_whatsapp || '',
+    order_date: form.order_date || '',
     public_path: form.public_path,
     template: form.template,
     font_family: form.font_family || 'elegant',
+    font_sizes: Object.fromEntries(
+      Object.entries(form.font_sizes || {})
+        .filter(([, size]) => Number.isInteger(Number(size)) && Number(size) >= 8 && Number(size) <= 120)
+        .map(([path, size]) => [path, Number(size)]),
+    ),
     locale: form.locale === 'ar' ? 'ar' : 'en',
     is_published: form.is_published,
     loading: form.loading,

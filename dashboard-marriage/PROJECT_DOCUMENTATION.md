@@ -6,7 +6,7 @@ This app is a romantic single-page wedding invitation website for **Walaa & Abdu
 
 The experience is designed as a polished public-facing invitation page rather than a multi-screen dashboard. All visible content is assembled into one scrolling home screen.
 
-## Tech Stackk
+## Tech Stack
 
 - **React 19** with Create React App
 - **Tailwind CSS** for utility styling and theme colors

@@ -70,6 +70,9 @@ const fieldGroups = {
     ['bride_name', 'dashboard.fields.bride_name'],
     ['couple_display_name', 'dashboard.fields.display_name', true],
     ['public_path', 'dashboard.fields.route_name'],
+    ['requester_name', 'Requester Name (optional)'],
+    ['requester_whatsapp', 'WhatsApp Number (optional)', false, 'tel'],
+    ['order_date', 'Order Date (optional)', false, 'date'],
     ['organizer_username', 'dashboard.fields.organizer_username'],
     ['organizer_password', 'dashboard.fields.organizer_password'],
   ],
@@ -147,6 +150,77 @@ const fieldGroups = {
     ['footer.made_with', 'dashboard.fields.made_with'],
     ['footer.for_day', 'dashboard.fields.for_day'],
   ],
+};
+
+const NON_TYPOGRAPHY_FIELDS = new Set([
+  'public_path',
+  'requester_name',
+  'requester_whatsapp',
+  'order_date',
+  'organizer_username',
+  'organizer_password',
+  'event.map_url',
+  'gallery.image_urls_text',
+  'countdown.target_date',
+  'audio.src',
+  'audio.volume',
+  'party_upload.max_images',
+]);
+
+const clampFontSize = (value) => Math.min(120, Math.max(8, Math.round(Number(value) || 16)));
+
+const FontSizeControl = ({ value, onChange, locale }) => {
+  const customSize = value !== null && value !== '' && Number.isFinite(Number(value)) ? Number(value) : null;
+  const isArabic = locale === 'ar';
+  const adjust = (amount) => onChange(clampFontSize((customSize ?? 16) + amount));
+  const [draftSize, setDraftSize] = useState(customSize ?? '');
+
+  useEffect(() => {
+    setDraftSize(customSize ?? '');
+  }, [customSize]);
+
+  const commitDraftSize = () => {
+    if (draftSize === '') onChange(null);
+    else onChange(clampFontSize(draftSize));
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#d9c58f]/60 bg-[#fffaf0] px-3 py-2 dark:border-gold/25 dark:bg-gold/5">
+      <span className="text-xs font-black text-[#725b25] dark:text-gold">
+        {isArabic ? 'حجم الخط' : 'Font size'}
+      </span>
+      <button type="button" onClick={() => adjust(-1)} className="h-8 w-8 rounded-md border border-slate-300 bg-white text-lg font-black text-slate-800 dark:border-[#425168] dark:bg-[#101923] dark:text-white" aria-label={isArabic ? 'تصغير الخط' : 'Decrease font size'}>−</button>
+      <input
+        type="range"
+        min="8"
+        max="120"
+        value={customSize ?? 16}
+        onChange={(event) => onChange(clampFontSize(event.target.value))}
+        className="h-2 min-w-28 flex-1 cursor-pointer accent-[#b49344]"
+        aria-label={isArabic ? 'حجم الخط بالبكسل' : 'Font size in pixels'}
+      />
+      <button type="button" onClick={() => adjust(1)} className="h-8 w-8 rounded-md border border-slate-300 bg-white text-lg font-black text-slate-800 dark:border-[#425168] dark:bg-[#101923] dark:text-white" aria-label={isArabic ? 'تكبير الخط' : 'Increase font size'}>+</button>
+      <div className="flex items-center gap-1">
+        <input
+          type="number"
+          min="8"
+          max="120"
+          value={draftSize}
+          placeholder="Auto"
+          onChange={(event) => setDraftSize(event.target.value)}
+          onBlur={commitDraftSize}
+          onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
+          className="h-8 w-20 rounded-md border border-slate-300 bg-white px-2 text-center text-xs font-bold text-slate-900 dark:border-[#425168] dark:bg-[#101923] dark:text-white"
+        />
+        <span className="text-[11px] font-bold text-slate-500">px</span>
+      </div>
+      {customSize !== null && (
+        <button type="button" onClick={() => onChange(null)} className="rounded-md px-2 py-1 text-xs font-black text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30">
+          {isArabic ? 'تلقائي' : 'Reset'}
+        </button>
+      )}
+    </div>
+  );
 };
 
 const SECTION_VISIBILITY_CONFIG = {
@@ -375,6 +449,7 @@ const InvitationsOverview = ({
               <option value="love-letter">Love Letter</option>
               <option value="floral-butterfly">Floral Butterfly</option>
               <option value="modern-minimal">Modern Minimalist</option>
+              <option value="burgundy">Burgundy</option>
             </select>
           </div>
 
@@ -455,7 +530,7 @@ const InvitationsOverview = ({
   );
 };
 
-export default function InvitationsPage({ embedded = false, active = true }) {
+export default function InvitationsPage({ embedded = false, active = true, studioMode = false }) {
   const { t, i18n } = useTranslation();
   const toast = useToast();
   const navigate = useNavigate();
@@ -602,14 +677,43 @@ export default function InvitationsPage({ embedded = false, active = true }) {
   }, [editorLocale]);
 
   useEffect(() => {
+    if (!studioMode || window.parent === window) return undefined;
+    window.parent.postMessage({
+      type: 'wil-template-preview-data',
+      category: 'invitation',
+      data: { ...serializeInvitation(form), locale: editorLocale },
+    }, '*');
+    return undefined;
+  }, [editorLocale, form, studioMode]);
+
+  useEffect(() => {
+    if (!studioMode) return undefined;
+    const handleStudioMessage = (event) => {
+      if (event.data?.type !== 'wil-template-language') return;
+      setEditorLocale(event.data.locale === 'ar' ? 'ar' : 'en');
+    };
+    window.addEventListener('message', handleStudioMessage);
+    return () => window.removeEventListener('message', handleStudioMessage);
+  }, [studioMode]);
+
+  useEffect(() => {
     if (!isEditorView) return;
 
     setForm((current) => {
       const queryParams = new URLSearchParams(location.search);
       const template = queryParams.get('template');
+      const isTemplatePreview = queryParams.get('templatePreview') === '1';
       let next = current;
       if (template && current.template !== template) {
         next = { ...next, template };
+      }
+      if (isTemplatePreview && !routeName(next.groom_name) && !routeName(next.bride_name)) {
+        next = {
+          ...next,
+          groom_name: { en: 'Demo Groom', ar: 'العريس التجريبي' },
+          bride_name: { en: 'Demo Bride', ar: 'العروس التجريبية' },
+          couple_display_name: { en: 'Demo Groom & Demo Bride', ar: 'العريس والعروس' },
+        };
       }
       if (next.public_path) return next;
       return { ...next, public_path: createInvitationPath(routeName(next.groom_name), routeName(next.bride_name), routeCode) };
@@ -633,6 +737,15 @@ export default function InvitationsPage({ embedded = false, active = true }) {
       }
 
       return next;
+    });
+  };
+
+  const updateFontSize = (path, value) => {
+    setForm((current) => {
+      const fontSizes = { ...(current.font_sizes || {}) };
+      if (value === null || value === '') delete fontSizes[path];
+      else fontSizes[path] = clampFontSize(value);
+      return { ...current, font_sizes: fontSizes };
     });
   };
 
@@ -898,17 +1011,26 @@ export default function InvitationsPage({ embedded = false, active = true }) {
         if (activeSection === 'audio' && path === 'audio.src') return false;
         return true;
       })
-      .map(([path, label, textarea]) => {
+      .map(([path, label, textarea, type]) => {
         const fieldPath = buildFormFieldPath(path, editorLocale);
 
         return (
-          <Field
-            key={fieldPath}
-            label={t(label)}
-            value={getValue(form, fieldPath)}
-            textarea={textarea}
-            onChange={(value) => update(fieldPath, value)}
-          />
+          <div key={fieldPath} className="grid gap-2">
+            <Field
+              label={t(label)}
+              value={getValue(form, fieldPath)}
+              textarea={textarea}
+              type={type}
+              onChange={(value) => update(fieldPath, value)}
+            />
+            {!NON_TYPOGRAPHY_FIELDS.has(path) && (
+              <FontSizeControl
+                value={form.font_sizes?.[fieldPath]}
+                onChange={(value) => updateFontSize(fieldPath, value)}
+                locale={editorLocale}
+              />
+            )}
+          </div>
         );
       });
   };

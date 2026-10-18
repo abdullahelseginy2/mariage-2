@@ -38,6 +38,11 @@ const templateThemes = {
     btnClass: "bg-[#07070b]/80 border-[#e6c387]/35 text-[#e6c387] hover:bg-[#e6c387] hover:text-[#07070b] ring-[#e6c387]/30",
     pingClass: "bg-[#e6c387]/50",
     tooltipClass: "bg-[#07070b] text-white border border-[#e6c387]/20"
+  },
+  burgundy: {
+    btnClass: "bg-[#4b091d]/90 border-[#e8c78d]/45 text-[#f2d59e] hover:bg-[#e8c78d] hover:text-[#3a0616] ring-[#e8c78d]/25",
+    pingClass: "bg-[#e8c78d]/35",
+    tooltipClass: "bg-[#310512] text-[#fff7ec] border border-[#e8c78d]/25"
   }
 };
 

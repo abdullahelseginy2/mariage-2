@@ -18,11 +18,19 @@ class InvitationEndpointTest extends TestCase
             'hero' => ['kicker' => 'We are getting married'],
             'event' => ['venue' => 'Cleopatra Hall'],
             'template' => 'signature',
+            'font_sizes' => [
+                'groom_name.en' => 48,
+                'hero.en.kicker' => 22,
+            ],
         ])
             ->assertCreated()
             ->assertJsonPath('data.groom_name', 'Abdullah')
             ->assertJsonPath('data.bride_name', 'Walaa')
-            ->assertJsonPath('data.template', 'signature');
+            ->assertJsonPath('data.template', 'signature')
+            ->assertJsonPath('data.font_sizes', [
+                'groom_name.en' => 48,
+                'hero.en.kicker' => 22,
+            ]);
 
         $publicPath = $response->json('data.public_path');
 
@@ -123,6 +131,17 @@ class InvitationEndpointTest extends TestCase
         ])
             ->assertCreated()
             ->assertJsonPath('data.template', 'modern-minimal');
+    }
+
+    public function test_admin_can_create_burgundy_invitation_template(): void
+    {
+        $this->postJson('/api/v1/admin/invitations', [
+            'groom_name' => 'Omar',
+            'bride_name' => 'Nour',
+            'template' => 'burgundy',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.template', 'burgundy');
     }
 
     public function test_custom_public_path_must_end_with_four_digits(): void

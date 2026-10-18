@@ -27,6 +27,8 @@ class LoveMessageController extends Controller
             $query->where(fn ($builder) => $builder
                 ->where('recipient_name', 'like', "%{$search}%")
                 ->orWhere('sender_name', 'like', "%{$search}%")
+                ->orWhere('requester_name', 'like', "%{$search}%")
+                ->orWhere('requester_whatsapp', 'like', "%{$search}%")
                 ->orWhere('slug', 'like', "%{$search}%"));
         }
 
@@ -41,7 +43,7 @@ class LoveMessageController extends Controller
         }
 
         if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->input('date'));
+            $query->whereDate('order_date', $request->input('date'));
         }
 
         $query->orderByDesc('is_demo');
@@ -107,6 +109,15 @@ class LoveMessageController extends Controller
 
         return [
             ...Arr::only($validated, ['recipient_name', 'sender_name', 'content']),
+            'requester_name' => array_key_exists('requester_name', $validated)
+                ? (filled($validated['requester_name'])
+                    ? trim((string) $validated['requester_name'])
+                    : "{$validated['recipient_name']} & {$validated['sender_name']}")
+                : ($message?->requester_name ?: "{$validated['recipient_name']} & {$validated['sender_name']}"),
+            'requester_whatsapp' => array_key_exists('requester_whatsapp', $validated)
+                ? (filled($validated['requester_whatsapp']) ? trim((string) $validated['requester_whatsapp']) : null)
+                : $message?->requester_whatsapp,
+            'order_date' => $validated['order_date'] ?? $message?->order_date ?? now()->toDateString(),
             'is_published' => $validated['is_published'] ?? true,
             'locale' => $validated['locale'] ?? $message?->locale ?? 'en',
             'font_family' => $validated['font_family'] ?? $message?->font_family ?? 'elegant',

@@ -27,6 +27,8 @@ class EidGreetingController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('recipient_name', 'like', $search)
                   ->orWhere('sender_name', 'like', $search)
+                  ->orWhere('requester_name', 'like', $search)
+                  ->orWhere('requester_whatsapp', 'like', $search)
                   ->orWhere('slug', 'like', $search)
                   ->orWhere('code', 'like', $search);
             });
@@ -46,7 +48,7 @@ class EidGreetingController extends Controller
         }
 
         if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->input('date'));
+            $query->whereDate('order_date', $request->input('date'));
         }
 
         $sort = $request->input('sort', 'latest');
@@ -122,6 +124,15 @@ class EidGreetingController extends Controller
 
         return [
             ...Arr::only($validated, ['recipient_name', 'sender_name', 'content']),
+            'requester_name' => array_key_exists('requester_name', $validated)
+                ? (filled($validated['requester_name'])
+                    ? trim((string) $validated['requester_name'])
+                    : "{$recipientName} & {$senderName}")
+                : ($greeting?->requester_name ?: "{$recipientName} & {$senderName}"),
+            'requester_whatsapp' => array_key_exists('requester_whatsapp', $validated)
+                ? (filled($validated['requester_whatsapp']) ? trim((string) $validated['requester_whatsapp']) : null)
+                : $greeting?->requester_whatsapp,
+            'order_date' => $validated['order_date'] ?? $greeting?->order_date ?? now()->toDateString(),
             'is_published' => $validated['is_published'] ?? true,
             'locale' => $validated['locale'] ?? $greeting?->locale ?? 'en',
             'font_family' => $validated['font_family'] ?? $greeting?->font_family ?? 'elegant',

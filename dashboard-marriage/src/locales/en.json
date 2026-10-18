@@ -131,7 +131,8 @@
       "empty": "No invitations yet. Create the first invitation to start.",
       "past_invitations": "Past invitations",
       "completed_work": "Completed templates",
-      "completed_work_desc": "Manage all your created templates and invitations"
+      "completed_work_desc": "Manage all your created templates and invitations",
+      "templates_gallery": "Templates"
     },
     "header": {
       "kicker": "Invitation CMS",
@@ -282,6 +283,8 @@
       "five_description": "White floral garden design with a blooming entrance, flying butterflies, soft flower colors, gallery, details, and RSVP.",
       "six": "Modern Minimalist",
       "six_description": "Sleek and clean dark/champagne-gold design with glassmorphic cards, large modern serif typography, and custom micro-interactions.",
+      "burgundy": "Burgundy Romance",
+      "burgundy_description": "A cinematic ring-box opening with a silent film, deep burgundy velvet, champagne details, and the complete wedding experience.",
       "picker_hint": "Choose the guest experience. Each template uses the same invitation content you configure below.",
       "selected": "Selected",
       "preview": "Preview"

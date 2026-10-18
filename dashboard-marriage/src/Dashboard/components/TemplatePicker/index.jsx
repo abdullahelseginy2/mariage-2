@@ -7,6 +7,7 @@ import temp3Preview from '../../../assets/images/temp3.png';
 import temp4Preview from '../../../assets/images/temp4.png';
 import temp5Preview from '../../../assets/images/temp5.png';
 import temp6Preview from '../../../assets/images/temp6.png';
+import burgundyPreview from '../../../assets/images/burgundy-ring.png';
 
 export const invitationTemplateOptions = [
   {
@@ -50,6 +51,13 @@ export const invitationTemplateOptions = [
     image: temp6Preview,
     labelKey: 'dashboard.templates.six',
     descriptionKey: 'dashboard.templates.six_description',
+  },
+  {
+    globalId: 12,
+    id: 'burgundy',
+    image: burgundyPreview,
+    labelKey: 'dashboard.templates.burgundy',
+    descriptionKey: 'dashboard.templates.burgundy_description',
   },
 ];
 

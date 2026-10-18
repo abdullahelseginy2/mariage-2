@@ -22,7 +22,14 @@ const sections = [
 ];
 
 const fields = {
-  basic: [['recipient_name', 'Recipient Name'], ['sender_name', 'Sender Name'], ['public_path', 'Route Path']],
+  basic: [
+    ['recipient_name', 'Recipient Name'],
+    ['sender_name', 'Sender Name'],
+    ['public_path', 'Route Path'],
+    ['requester_name', 'Requester Name (optional)'],
+    ['requester_whatsapp', 'WhatsApp Number (optional)', false, 'tel'],
+    ['order_date', 'Order Date (optional)', false, 'date'],
+  ],
   intro: [['content.intro.teaser', 'Intro Text'], ['content.intro.revealed_message', 'Revealed Message'], ['content.intro.open_button', 'Open Button']],
   countdown_reveal: [['content.countdown_reveal.lines_text', 'Countdown sentences, 10 to 1 (one per line)', true]],
   reasons: [['content.reasons.title', 'Section Title'], ['content.reasons.items_text', 'Reasons (one per line)', true]],
@@ -59,7 +66,7 @@ const normalizeMediaUrl = (url) => {
   }
 };
 
-export default function LoveMessagesPage({ embedded = false, active = true }) {
+export default function LoveMessagesPage({ embedded = false, active = true, studioMode = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -111,11 +118,51 @@ export default function LoveMessagesPage({ embedded = false, active = true }) {
   useEffect(() => {
     if (isEditor) {
       setEditingId(null);
-      setForm(createEmptyLoveMessageForm());
+      const isTemplatePreview = new URLSearchParams(location.search).get('templatePreview') === '1';
+      const nextForm = createEmptyLoveMessageForm();
+      if (isTemplatePreview) {
+        const routeCode = createCode();
+        nextForm.recipient_name = 'Someone Special';
+        nextForm.sender_name = 'Your Favorite Person';
+        nextForm.public_path = `someone-special-your-favorite-person-${routeCode}`;
+      }
+      setForm(nextForm);
       setActiveSection('basic');
       setStatus('Creating new Love Message');
     }
-  }, [isEditor]);
+  }, [isEditor, location.search]);
+
+  useEffect(() => {
+    if (!studioMode || window.parent === window) return undefined;
+    window.parent.postMessage({
+      type: 'wil-template-preview-data',
+      category: 'love',
+      data: serializeLoveMessage(form),
+    }, '*');
+    return undefined;
+  }, [form, studioMode]);
+
+  useEffect(() => {
+    if (!studioMode) return undefined;
+    const handleStudioMessage = (event) => {
+      if (event.data?.type !== 'wil-template-language') return;
+      const locale = event.data.locale === 'ar' ? 'ar' : 'en';
+      setForm((current) => ({
+        ...createEmptyLoveMessageForm(locale),
+        recipient_name: locale === 'ar' ? 'شخص مميز' : 'Someone Special',
+        sender_name: locale === 'ar' ? 'الشخص المفضل لديك' : 'Your Favorite Person',
+        public_path: current.public_path,
+        requester_name: current.requester_name,
+        requester_whatsapp: current.requester_whatsapp,
+        order_date: current.order_date,
+        template: current.template,
+        font_family: current.font_family,
+        is_published: current.is_published,
+      }));
+    };
+    window.addEventListener('message', handleStudioMessage);
+    return () => window.removeEventListener('message', handleStudioMessage);
+  }, [studioMode]);
 
   const update = (path, value) => {
     setForm((current) => {
@@ -317,10 +364,10 @@ export default function LoveMessagesPage({ embedded = false, active = true }) {
         <div className="flex flex-wrap gap-2"><span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-500 dark:border-[#344458] dark:bg-[#101923] dark:text-slate-300">{status}</span><CustomBottom text="Save" onClick={save} loading={saving} loadingText="Saving..." rightIcon={<FiSave />} buttonStyles="min-h-10 px-4 bg-[#111820] text-white dark:bg-gold dark:text-[#111820] font-black" styles="w-fit" /></div>
       </header>
       {publicUrl && <div className="mb-4 flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-[#263547] dark:bg-[#0e1721] sm:flex-row"><span className="min-w-0 flex-1 truncate px-2 py-2 text-sm" dir="ltr">{publicUrl}</span><button type="button" onClick={() => navigator.clipboard?.writeText(publicUrl)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-gold px-4 text-sm font-black text-[#111820]"><FiCopy /> Copy</button><a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-black"><FiExternalLink /> Open</a></div>}
-      <div className="mb-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-[#263547] dark:bg-[#0b131c]"><ContentLocaleSwitcher value={form.locale} onChange={(locale) => setForm({ ...createEmptyLoveMessageForm(locale), recipient_name: form.recipient_name, sender_name: form.sender_name, public_path: form.public_path, template: form.template, font_family: form.font_family, is_published: form.is_published })} /></div>
+      <div className="mb-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-[#263547] dark:bg-[#0b131c]"><ContentLocaleSwitcher value={form.locale} onChange={(locale) => setForm({ ...createEmptyLoveMessageForm(locale), recipient_name: form.recipient_name, sender_name: form.sender_name, public_path: form.public_path, requester_name: form.requester_name, requester_whatsapp: form.requester_whatsapp, order_date: form.order_date, template: form.template, font_family: form.font_family, is_published: form.is_published })} /></div>
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#263547] dark:bg-[#0b131c]">
         <nav className="overflow-x-auto border-b border-slate-100 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-[#101923]"><div className="flex min-w-max gap-2">{sections.map(([id, label], index) => <button key={id} type="button" onClick={() => setActiveSection(id)} className={`min-h-12 rounded-lg border px-3 text-sm font-black ${activeSection === id ? 'border-[#111820] bg-[#111820] text-white dark:border-gold dark:bg-gold dark:text-[#111820]' : 'border-slate-200 bg-white text-slate-500 dark:border-[#344458] dark:bg-[#0b131c] dark:text-slate-300'}`}>{index + 1}. {label}</button>)}</div></nav>
-        <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-2">{activeFields.map(([path, label, textarea]) => <Field key={path} label={label} value={getValue(form, path) || ''} textarea={textarea} onChange={(value) => update(path, value)} />)}{mediaPanel}{templatePicker}{activeSection === 'basic' && <label className="col-span-full flex min-h-12 w-fit items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 text-xs font-black uppercase tracking-[0.14em] dark:border-[#344458] dark:bg-[#101923]"><input className="h-4 w-4 accent-[#D6B15C]" type="checkbox" checked={form.is_published} onChange={(event) => update('is_published', event.target.checked)} /> Published</label>}</div>
+        <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-2">{activeFields.map(([path, label, textarea, type]) => <Field key={path} label={label} value={getValue(form, path) || ''} textarea={textarea} type={type} onChange={(value) => update(path, value)} />)}{mediaPanel}{templatePicker}{activeSection === 'basic' && <label className="col-span-full flex min-h-12 w-fit items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 text-xs font-black uppercase tracking-[0.14em] dark:border-[#344458] dark:bg-[#101923]"><input className="h-4 w-4 accent-[#D6B15C]" type="checkbox" checked={form.is_published} onChange={(event) => update('is_published', event.target.checked)} /> Published</label>}</div>
       </div>
     </>
   );
@@ -384,6 +431,6 @@ export default function LoveMessagesPage({ embedded = false, active = true }) {
   );
 
   const dialogs = <><CustomModal isOpen={modalOpen} onClose={() => setModalOpen(false)} eyebrow="Love Message editor" title="Edit Love Message" headerActions={modalActions}>{editor}</CustomModal><ConfirmationDialog isOpen={Boolean(deleteCandidate)} onClose={() => setDeleteCandidate(null)} onConfirm={remove} confirmLoading={loading} title="Delete Love Message?" message={`Delete ${deleteCandidate?.recipient_name || ''}?`} confirmText="Delete" cancelText="Close" /></>;
-  if (embedded) return <>{overview}{dialogs}</>;
+  if (embedded) return <>{isEditor ? editor : overview}{dialogs}</>;
   return <DashboardLayout activeView={isEditor ? 'love-editor' : 'love'} onCreate={() => navigate('/invitations/new')} onShowCompleted={() => navigate('/completed')} onCreateEid={() => navigate('/eid-greetings/new')} onCreateBirthday={() => navigate('/birthday-greetings/new')} onCreateLove={() => navigate('/love-messages/new')} onShowSettings={() => navigate('/settings')}>{isEditor ? editor : overview}{dialogs}</DashboardLayout>;
 }

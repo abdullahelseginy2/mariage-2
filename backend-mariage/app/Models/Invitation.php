@@ -14,6 +14,9 @@ class Invitation extends Model
     protected $fillable = [
         'code',
         'slug',
+        'requester_name',
+        'requester_whatsapp',
+        'order_date',
         'groom_name',
         'bride_name',
         'couple_display_name',
@@ -21,6 +24,7 @@ class Invitation extends Model
         'template',
         'locale',
         'font_family',
+        'font_sizes',
         'hero',
         'loading',
         'event',
@@ -39,6 +43,8 @@ class Invitation extends Model
     {
         return [
             'is_published' => 'boolean',
+            'order_date' => 'date',
+            'font_sizes' => 'array',
             'couple_display_name' => 'array',
             'hero' => 'array',
             'loading' => 'array',

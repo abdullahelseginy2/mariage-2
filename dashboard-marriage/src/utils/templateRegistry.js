@@ -10,6 +10,7 @@ export const TEMPLATE_REGISTRY = [
   { globalId: 9, category: 'birthday', key: 'romantic', name: 'Love & Velvet' },
   { globalId: 10, category: 'birthday', key: 'neon', name: 'Neon Galaxy' },
   { globalId: 11, category: 'love-message', key: 'happy-message', name: 'Happy Message' },
+  { globalId: 12, category: 'invitation', key: 'burgundy', name: 'Burgundy Romance' },
 ];
 
 export const getTemplateGlobalId = (category, key) => (

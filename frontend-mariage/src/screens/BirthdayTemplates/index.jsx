@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import RouteDataLoader from '../RouteDataLoader';
 import { birthdayGreetingAPI } from '../../utils/api';
 import { extractApiData, extractApiError } from '../../utils/apiHelpers';
@@ -63,13 +63,29 @@ const MOCK_BIRTHDAY_GREETING = {
 
 const BirthdayTemplates = () => {
   const { birthdayPath } = useParams();
+  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
   const [greeting, setGreeting] = useState(null);
 
   useEffect(() => {
+    if (birthdayPath !== 'demo') return undefined;
+    const receiveStudioData = (event) => {
+      if (event.data?.type !== 'wil-template-preview-data' || event.data?.category !== 'birthday') return;
+      setGreeting(event.data.data);
+      setStatus('succeeded');
+    };
+    window.addEventListener('message', receiveStudioData);
+    return () => window.removeEventListener('message', receiveStudioData);
+  }, [birthdayPath]);
+
+  useEffect(() => {
     if (birthdayPath === 'demo') {
-      setGreeting(MOCK_BIRTHDAY_GREETING);
+      const requestedTemplate = searchParams.get('template');
+      const template = ['default', 'romantic', 'neon'].includes(requestedTemplate)
+        ? requestedTemplate
+        : MOCK_BIRTHDAY_GREETING.template;
+      setGreeting({ ...MOCK_BIRTHDAY_GREETING, template });
       setStatus('succeeded');
       return;
     }
@@ -87,7 +103,7 @@ const BirthdayTemplates = () => {
         setStatus('failed');
       });
     return () => { active = false; };
-  }, [birthdayPath]);
+  }, [birthdayPath, searchParams]);
 
   useEffect(() => {
     if (!greeting?.locale) return;

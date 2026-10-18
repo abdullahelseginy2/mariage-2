@@ -101,6 +101,17 @@ const DefaultEidTemplate = () => {
   const rainParticles = useMemo(() => createParticles(), []);
 
   useEffect(() => {
+    if (eidPath !== 'demo') return undefined;
+    const receiveStudioData = (event) => {
+      if (event.data?.type !== 'wil-template-preview-data' || event.data?.category !== 'eid') return;
+      setGreeting(event.data.data);
+      setStatus('succeeded');
+    };
+    window.addEventListener('message', receiveStudioData);
+    return () => window.removeEventListener('message', receiveStudioData);
+  }, [eidPath]);
+
+  useEffect(() => {
     if (eidPath === 'demo') {
       setGreeting(MOCK_EID_GREETING);
       setStatus('succeeded');

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiHeart, FiList, FiPlus, FiSettings, FiX } from 'react-icons/fi';
+import { FiGrid, FiHeart, FiList, FiPlus, FiSettings, FiX } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { LanguageSwitcher, ThemeToggle } from '../../components';
@@ -24,6 +24,12 @@ const Sidebar = ({ activeView, invitationsCount, eidCount, birthdayCount, loveCo
       total: (invitationsCount || 0) + (eidCount || 0) + (birthdayCount || 0) + (loveCount || 0),
       path: '/completed',
       onClick: onShowCompleted,
+    },
+    {
+      id: 'templates',
+      label: t('dashboard.sidebar.templates_gallery', 'Templates'),
+      icon: FiGrid,
+      path: '/templates',
     },
     {
       id: 'editor',

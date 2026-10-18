@@ -15,5 +15,6 @@ These IDs are unique across every category and must remain stable.
 | 9 | Birthday Greeting | `romantic` | Love & Velvet |
 | 10 | Birthday Greeting | `neon` | Neon Galaxy |
 | 11 | Love Message | `happy-message` | Happy Message |
+| 12 | Invitation | `burgundy` | Burgundy Romance |
 
 When adding a template, assign the next unused global ID. Never renumber existing templates.

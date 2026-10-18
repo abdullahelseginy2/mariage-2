@@ -62,7 +62,7 @@ const SectionHeading = ({ kicker, title, align = '' }) => (
   </header>
 );
 
-const SignatureIntro = ({ couple, introState, onOpen, onVideoEnd, videoRef }) => (
+const SignatureIntro = ({ couple, introState, onOpen, onVideoEnd, videoRef, introImage, introVideo, buttonLabel, playingLabel }) => (
   <motion.section
     className={`signature-video-intro is-${introState}`}
     initial={{ opacity: 0 }}
@@ -75,8 +75,14 @@ const SignatureIntro = ({ couple, introState, onOpen, onVideoEnd, videoRef }) =>
     <MarbleCorner className="bottom-left" />
     <MarbleCorner className="bottom-right" />
     <div className="signature-intro-film">
+      {introImage ? (
+        <>
+          <img className="signature-intro-backdrop" src={introImage} alt="" aria-hidden="true" />
+          <img className="signature-intro-cover" src={introImage} alt={couple || 'Wedding invitation'} />
+        </>
+      ) : null}
       <video ref={videoRef} muted playsInline preload="auto" onEnded={onVideoEnd}>
-        <source src={invitationFilm} type="video/mp4" />
+        <source src={introVideo || invitationFilm} type="video/mp4" />
       </video>
     </div>
     <div className="signature-intro-controls">
@@ -84,9 +90,10 @@ const SignatureIntro = ({ couple, introState, onOpen, onVideoEnd, videoRef }) =>
       {introState === 'ready' ? (
         <button type="button" onClick={onOpen} aria-label="Open the invitation">
           <FiHeart />
+          {buttonLabel ? <span>{buttonLabel}</span> : null}
         </button>
       ) : (
-        <span className="signature-intro-playing">Playing your invitation</span>
+        <span className="signature-intro-playing">{playingLabel || 'Playing your invitation'}</span>
       )}
     </div>
   </motion.section>
@@ -155,6 +162,44 @@ const SignatureFloralTimeline = ({ ready, weddingLine, groomName, brideName, cou
         </p>
       ) : null}
     </div>
+  );
+};
+
+const BurgundyHeroCopy = ({ ready, weddingLine, groomName, brideName, couple, event, hero, isArabic }) => {
+  const item = {
+    hidden: { opacity: 0, y: 22, filter: 'blur(9px)' },
+    shown: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] } },
+  };
+
+  const hasBothNames = Boolean(groomName && brideName);
+
+  return (
+    <motion.div
+      className="signature-hero-overlay-copy"
+      initial="hidden"
+      animate={ready ? 'shown' : 'hidden'}
+      variants={{ shown: { transition: { staggerChildren: 0.2, delayChildren: 0.12 } } }}
+    >
+      <motion.p variants={item} className="signature-wedding-line">{hero?.kicker || weddingLine}</motion.p>
+      {hasBothNames ? (
+        <>
+          <motion.h1 variants={item} className="signature-groom-name">{groomName}</motion.h1>
+          <motion.span variants={item} className="burgundy-hero-ampersand" aria-hidden="true">{isArabic ? 'و' : '&'}</motion.span>
+          <motion.h1 variants={item} className="signature-bride-name">{brideName}</motion.h1>
+        </>
+      ) : (
+        <motion.h1 variants={item} className="signature-groom-name">{couple || groomName || brideName}</motion.h1>
+      )}
+      <motion.div variants={item} className="signature-gold-divider"><i /><span>◆</span><i /></motion.div>
+      {hero?.body ? <motion.p variants={item} className="signature-hero-overlay-body">{hero.body}</motion.p> : null}
+      {event.date || event.time ? (
+        <motion.p variants={item} className="signature-date">
+          {event.date}
+          {event.date && event.time ? <em>•</em> : null}
+          {event.time}
+        </motion.p>
+      ) : null}
+    </motion.div>
   );
 };
 
@@ -368,7 +413,7 @@ const SignaturePersonalMessage = ({ description }) => {
   );
 };
 
-const SignatureTemplate = ({ invitation, invitationPath }) => {
+const SignatureTemplate = ({ invitation, invitationPath, introImage, introVideo, heroImage, variant = 'signature', introButtonLabel, introPlayingLabel }) => {
   const hero = invitation?.hero || {};
   const event = invitation?.event || {};
   const story = invitation?.love_story || {};
@@ -410,10 +455,14 @@ const SignatureTemplate = ({ invitation, invitationPath }) => {
   const mapsUrl = event.map_url || (event.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([event.venue, event.location].filter(Boolean).join(', '))}` : '');
 
   return (
-    <main className="signature-marble" dir={invitation?.locale === 'ar' ? 'rtl' : 'ltr'}>
+    <main
+      className={`signature-marble ${variant === 'signature' ? '' : `${variant}-invitation`}`}
+      dir={invitation?.locale === 'ar' ? 'rtl' : 'ltr'}
+      style={heroImage ? { '--signature-hero-image': `url("${heroImage}")` } : undefined}
+    >
       <AnimatePresence onExitComplete={() => { if (introState === 'complete') setInteriorReady(true); }}>
         {introState !== 'complete' ? (
-          <SignatureIntro couple={couple} introState={introState} onOpen={openInvitation} onVideoEnd={finishInvitationIntro} videoRef={videoRef} />
+          <SignatureIntro couple={couple} introState={introState} onOpen={openInvitation} onVideoEnd={finishInvitationIntro} videoRef={videoRef} introImage={introImage} introVideo={introVideo} buttonLabel={introButtonLabel} playingLabel={introPlayingLabel} />
         ) : null}
       </AnimatePresence>
 
@@ -426,8 +475,23 @@ const SignatureTemplate = ({ invitation, invitationPath }) => {
           <MarbleCorner className="top-right" />
           <MarbleCorner className="bottom-left" />
           <MarbleCorner className="bottom-right" />
-          <SignatureFloralTimeline ready={interiorReady} weddingLine={weddingLine} groomName={groomName} brideName={brideName} couple={couple} event={event} />
-          <a className="signature-scroll-cue" href="#signature-details">Discover our day <span>v</span></a>
+          {variant === 'burgundy' ? (
+            <BurgundyHeroCopy
+              ready={interiorReady}
+              weddingLine={weddingLine}
+              groomName={groomName}
+              brideName={brideName}
+              couple={couple}
+              event={event}
+              hero={hero}
+              isArabic={invitation?.locale === 'ar'}
+            />
+          ) : (
+            <SignatureFloralTimeline ready={interiorReady} weddingLine={weddingLine} groomName={groomName} brideName={brideName} couple={couple} event={event} />
+          )}
+          <a className="signature-scroll-cue" href="#signature-details">
+            {invitation?.locale === 'ar' ? 'اكتشف تفاصيل يومنا' : 'Discover our day'} <span>▾</span>
+          </a>
         </section>
       ) : null}
 

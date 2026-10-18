@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { resolveInvitationContent } from '../../utils/invitationContent';
@@ -11,9 +11,11 @@ import LoveLetterTemplate from './InvitationsTemplates/LoveLetterTemplate';
 import RoyalEntranceTemplate from './InvitationsTemplates/RoyalEntranceTemplate';
 import SignatureTemplate from './InvitationsTemplates/SignatureTemplate';
 import ModernMinimalistTemplate from './InvitationsTemplates/ModernMinimalistTemplate';
+import BurgundyTemplate from './InvitationsTemplates/BurgundyTemplate';
 import { clearInvitation, fetchInvitationByPath } from '../../store/invitationSlice';
 import WilPortfolio from '../WilPortfolio';
 import PlatformFooter from '../../components/PlatformFooter';
+import { useCustomFontSizes } from '../../utils/customFontSizes';
 import './index.css';
 
 const MOCK_WEDDING_INVITATION = {
@@ -73,17 +75,25 @@ const MOCK_WEDDING_INVITATION = {
 
 const HomeScreen = () => {
   const { invitationPath } = useParams();
+  const [searchParams] = useSearchParams();
   const { i18n } = useTranslation();
   const dispatch = useDispatch();
   const { data: invitation, status, error } = useSelector((state) => state.invitation);
+  const [studioInvitation, setStudioInvitation] = useState(null);
   const [showCurtainLoader, setShowCurtainLoader] = useState(true);
   const [audioStartSignal, setAudioStartSignal] = useState(0);
+  const invitationRootRef = useRef(null);
 
   const isDemo = invitationPath === 'demo';
+  const previewTemplate = searchParams.get('template');
+  const safePreviewTemplate = ['classic', 'signature', 'royal', 'love-letter', 'floral-butterfly', 'modern-minimal', 'burgundy'].includes(previewTemplate)
+    ? previewTemplate
+    : MOCK_WEDDING_INVITATION.template;
   const displayInvitation = useMemo(() => {
     if (!isDemo) return invitation;
-    return MOCK_WEDDING_INVITATION;
-  }, [isDemo, invitation]);
+    if (studioInvitation) return studioInvitation;
+    return { ...MOCK_WEDDING_INVITATION, template: safePreviewTemplate };
+  }, [isDemo, invitation, safePreviewTemplate, studioInvitation]);
   const displayStatus = isDemo ? 'succeeded' : status;
 
   const localizedInvitation = useMemo(
@@ -94,6 +104,8 @@ const HomeScreen = () => {
     || [localizedInvitation?.groom_name, localizedInvitation?.bride_name].filter(Boolean).join(' & ')
     || 'WIL';
 
+  useCustomFontSizes(invitationRootRef, localizedInvitation);
+
   useEffect(() => {
     document.title = pageTitle;
   }, [pageTitle]);
@@ -102,6 +114,16 @@ const HomeScreen = () => {
     if (!displayInvitation?.locale) return;
     i18n.changeLanguage(displayInvitation.locale);
   }, [i18n, displayInvitation?.locale]);
+
+  useEffect(() => {
+    if (!isDemo) return undefined;
+    const receiveStudioData = (event) => {
+      if (event.data?.type !== 'wil-template-preview-data' || event.data?.category !== 'invitation') return;
+      setStudioInvitation(event.data.data);
+    };
+    window.addEventListener('message', receiveStudioData);
+    return () => window.removeEventListener('message', receiveStudioData);
+  }, [isDemo]);
 
   useEffect(() => {
     if (!invitationPath || invitationPath === 'home' || invitationPath === 'demo') return;
@@ -143,12 +165,15 @@ const HomeScreen = () => {
         <title>{pageTitle}</title>
       </Helmet>
       <div
+        ref={invitationRootRef}
         className="home-screen wil-font-theme overflow-hidden"
         data-font-family={localizedInvitation.font_family || 'elegant'}
         data-template={localizedInvitation.template || 'classic'}
         dir={localizedInvitation.locale === 'ar' ? 'rtl' : 'ltr'}
       >
-        {localizedInvitation.template === 'floral-butterfly' ? (
+        {localizedInvitation.template === 'burgundy' ? (
+          <BurgundyTemplate invitation={localizedInvitation} invitationPath={invitationPath} />
+        ) : localizedInvitation.template === 'floral-butterfly' ? (
           <FloralButterflyTemplate invitation={localizedInvitation} invitationPath={invitationPath} />
         ) : localizedInvitation.template === 'modern-minimal' ? (
           <ModernMinimalistTemplate invitation={localizedInvitation} invitationPath={invitationPath} />

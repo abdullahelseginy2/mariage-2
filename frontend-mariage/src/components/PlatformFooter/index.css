@@ -61,6 +61,16 @@
   --footer-accent: #e6c387;
 }
 
+.wil-platform-footer[data-theme='burgundy'] {
+  --footer-bg: #170107;
+  --footer-surface: rgba(232, 199, 141, 0.06);
+  --footer-border: rgba(232, 199, 141, 0.3);
+  --footer-text: #fff7ec;
+  --footer-muted: rgba(255, 240, 228, 0.64);
+  --footer-accent: #e8c78d;
+  background-image: radial-gradient(circle at 50% 0%, rgba(139, 30, 60, 0.26), transparent 55%), linear-gradient(145deg, #170107, #3b0616);
+}
+
 .wil-platform-footer[data-theme='birthday-neon'] {
   --footer-bg: #05070f;
   --footer-border: rgba(0, 245, 255, 0.24);

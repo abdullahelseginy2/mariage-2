@@ -35,6 +35,7 @@ import floralButterfly1 from '../../assets/images/templates/floral-butterfly-1.j
 import floralButterfly2 from '../../assets/images/templates/floral-butterfly-2.jpg';
 import modernMinimal1 from '../../assets/images/templates/modern-minimal-1.jpg';
 import modernMinimal2 from '../../assets/images/templates/modern-minimal-2.jpg';
+import burgundyRing from '../../assets/images/begandy-demo/ring-cover.png';
 import birthdayClassic1 from '../../assets/images/templates/birthday- Classic Romantic-1.jpg';
 import birthdayClassic2 from '../../assets/images/templates/birthday- Classic Romantic-2.jpg';
 import birthdayVelvet1 from '../../assets/images/templates/birthday-Love&Velvet-1.jpg';
@@ -186,6 +187,7 @@ const TEMPLATE_NAMES = {
   'love-letter': 'Love Letter',
   'floral-butterfly': 'Floral Butterfly',
   'modern-minimal': 'Modern Minimalist',
+  burgundy: 'Burgundy Romance',
   default: 'Classic Celebration',
   romantic: 'Love & Velvet',
   neon: 'Neon Galaxy',
@@ -201,6 +203,7 @@ const SERVICE_CONFIG = [
 
 const TEMPLATE_CATALOG = {
   invitations: [
+    { template: 'burgundy', path: 'demo?template=burgundy', label: 'Burgundy Romance', screenshots: [burgundyRing, burgundyRing] },
     { template: 'royal', path: 'demo-royal-0000', url: 'https://marriage-five-pi.vercel.app/demo-royal-0000', label: 'Royal Entrance', screenshots: [royal1, royal2] },
     { template: 'love-letter', path: 'demo-love-letter-0000', url: 'https://marriage-five-pi.vercel.app/demo-love-letter-0000', label: 'Love Letter', screenshots: [loveLetter1, loveLetter2] },
     { template: 'floral-butterfly', path: 'demo-floral-butterfly-0000', url: 'https://marriage-five-pi.vercel.app/demo-floral-butterfly-0000', label: 'Floral Butterfly', screenshots: [floralButterfly1, floralButterfly2] },
@@ -216,6 +219,7 @@ const TEMPLATE_CATALOG = {
   love: [{ template: 'happy-message', path: 'mariem-someone-special-0011', url: 'https://marriage-five-pi.vercel.app/love/mariem-someone-special-0011', label: 'Happy Message', screenshots: [happyMessage1, happyMessage2] }],
 };
 const HERO_TEMPLATE_SCREENS = [
+  { image: burgundyRing, label: 'Burgundy Romance' },
   { image: royal1, label: 'Royal Entrance' },
   { image: loveLetter1, label: 'Love Letter' },
   { image: floralButterfly1, label: 'Floral Butterfly' },

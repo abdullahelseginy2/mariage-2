@@ -34,6 +34,9 @@ const fields = {
     ['recipient_name', 'Recipient Name'],
     ['sender_name', 'Sender Name'],
     ['public_path', 'Route Path'],
+    ['requester_name', 'Requester Name (optional)'],
+    ['requester_whatsapp', 'WhatsApp Number (optional)', false, 'tel'],
+    ['order_date', 'Order Date (optional)', false, 'date'],
     ['content.basic.passcode', 'Unlock Passcode'],
   ],
   hero: [
@@ -307,7 +310,7 @@ const BirthdayOverview = ({
   );
 };
 
-export default function BirthdayGreetingsPage({ embedded = false, active = true }) {
+export default function BirthdayGreetingsPage({ embedded = false, active = true, studioMode = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -572,15 +575,54 @@ export default function BirthdayGreetingsPage({ embedded = false, active = true 
     if (view === 'birthday-editor') {
       const queryParams = new URLSearchParams(location.search);
       const template = queryParams.get('template');
+      const isTemplatePreview = queryParams.get('templatePreview') === '1';
+      const previewCode = createCode();
       setEditingId(null);
       setForm(prev => ({
         ...createEmptyBirthdayForm('en'),
-        template: template || (prev && prev.template ? prev.template : 'default')
+        template: template || (prev && prev.template ? prev.template : 'default'),
+        ...(isTemplatePreview ? {
+          recipient_name: 'Birthday Star',
+          sender_name: 'Someone Special',
+          public_path: createPath('Birthday Star', 'Someone Special', previewCode),
+        } : {}),
       }));
       setActiveSection('basic');
       setStatus('Creating new Birthday greeting');
     }
   }, [view, location.search]);
+
+  useEffect(() => {
+    if (!studioMode || window.parent === window) return undefined;
+    window.parent.postMessage({
+      type: 'wil-template-preview-data',
+      category: 'birthday',
+      data: serializeBirthdayGreeting(form),
+    }, '*');
+    return undefined;
+  }, [form, studioMode]);
+
+  useEffect(() => {
+    if (!studioMode) return undefined;
+    const handleStudioMessage = (event) => {
+      if (event.data?.type !== 'wil-template-language') return;
+      const locale = event.data.locale === 'ar' ? 'ar' : 'en';
+      setForm((current) => ({
+        ...createEmptyBirthdayForm(locale),
+        recipient_name: locale === 'ar' ? 'نجمة عيد الميلاد' : 'Birthday Star',
+        sender_name: locale === 'ar' ? 'شخص مميز' : 'Someone Special',
+        public_path: current.public_path,
+        requester_name: current.requester_name,
+        requester_whatsapp: current.requester_whatsapp,
+        order_date: current.order_date,
+        template: current.template,
+        font_family: current.font_family,
+        is_published: current.is_published,
+      }));
+    };
+    window.addEventListener('message', handleStudioMessage);
+    return () => window.removeEventListener('message', handleStudioMessage);
+  }, [studioMode]);
 
   const editGreeting = async (greeting) => {
     setEditLoadingId(greeting.id);
@@ -734,6 +776,9 @@ export default function BirthdayGreetingsPage({ embedded = false, active = true 
             recipient_name: form.recipient_name,
             sender_name: form.sender_name,
             public_path: form.public_path,
+            requester_name: form.requester_name,
+            requester_whatsapp: form.requester_whatsapp,
+            order_date: form.order_date,
             template: form.template,
             font_family: form.font_family,
             is_published: form.is_published,
@@ -754,7 +799,7 @@ export default function BirthdayGreetingsPage({ embedded = false, active = true 
           </ol>
         </nav>
         <div className={`grid gap-4 p-4 sm:p-5 ${activeSection === 'wishes' || activeSection === 'album' ? '' : 'md:grid-cols-2'}`}>
-          {activeFieldsFiltered.map(([path, label, textarea]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} onChange={(value) => update(path, value)} />)}
+          {activeFieldsFiltered.map(([path, label, textarea, type]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} type={type} onChange={(value) => update(path, value)} />)}
           {activeSection === 'album' && renderAlbumUploadControls()}
           {activeSection === 'audio' && renderAudioPreview()}
           {activeSection === 'basic' ? (
@@ -791,6 +836,9 @@ export default function BirthdayGreetingsPage({ embedded = false, active = true 
                 recipient_name: form.recipient_name,
                 sender_name: form.sender_name,
                 public_path: form.public_path,
+                requester_name: form.requester_name,
+                requester_whatsapp: form.requester_whatsapp,
+                order_date: form.order_date,
                 font_family: form.font_family,
                 is_published: form.is_published,
               })}
@@ -799,7 +847,7 @@ export default function BirthdayGreetingsPage({ embedded = false, active = true 
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#263547] dark:bg-[#0b131c]">
             <nav className="overflow-x-auto border-b border-slate-100 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-[#101923]"><ol className="flex min-w-max items-center gap-2">{sections.map((section, index) => <li key={section.id} className="flex items-center gap-2"><button type="button" onClick={() => setActiveSection(section.id)} className={`grid min-h-12 grid-cols-[auto_1fr] items-center gap-2 rounded-lg border px-3 text-start text-sm font-black transition ${activeSection === section.id ? 'border-[#111820] bg-[#111820] text-white dark:border-gold dark:bg-gold dark:text-[#111820]' : 'border-slate-200 bg-white text-slate-500 dark:border-[#344458] dark:bg-[#0b131c] dark:text-slate-300'}`}><span className="grid h-7 w-7 place-items-center rounded-full text-xs">{index + 1}</span><span>{section.label}</span></button></li>)}</ol></nav>
             <div className={`grid gap-4 p-4 sm:p-5 ${activeSection === 'wishes' || activeSection === 'album' ? '' : 'md:grid-cols-2'}`}>
-              {activeFieldsFiltered.map(([path, label, textarea]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} onChange={(value) => update(path, value)} />)}
+              {activeFieldsFiltered.map(([path, label, textarea, type]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} type={type} onChange={(value) => update(path, value)} />)}
               {activeSection === 'album' && renderAlbumUploadControls()}
               {activeSection === 'audio' && renderAudioPreview()}
               {activeSection === 'basic' ? (
@@ -845,6 +893,9 @@ export default function BirthdayGreetingsPage({ embedded = false, active = true 
               recipient_name: form.recipient_name,
               sender_name: form.sender_name,
               public_path: form.public_path,
+              requester_name: form.requester_name,
+              requester_whatsapp: form.requester_whatsapp,
+              order_date: form.order_date,
               font_family: form.font_family,
               is_published: form.is_published,
             })}
@@ -853,7 +904,7 @@ export default function BirthdayGreetingsPage({ embedded = false, active = true 
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#263547] dark:bg-[#0b131c]">
           <nav className="overflow-x-auto border-b border-slate-100 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-[#101923]"><ol className="flex min-w-max items-center gap-2">{sections.map((section, index) => <li key={section.id} className="flex items-center gap-2"><button type="button" onClick={() => setActiveSection(section.id)} className={`grid min-h-12 grid-cols-[auto_1fr] items-center gap-2 rounded-lg border px-3 text-start text-sm font-black transition ${activeSection === section.id ? 'border-[#111820] bg-[#111820] text-white dark:border-gold dark:bg-gold dark:text-[#111820]' : 'border-slate-200 bg-white text-slate-500 dark:border-[#344458] dark:bg-[#0b131c] dark:text-slate-300'}`}><span className="grid h-7 w-7 place-items-center rounded-full text-xs">{index + 1}</span><span>{section.label}</span></button></li>)}</ol></nav>
           <div className={`grid gap-4 p-4 sm:p-5 ${activeSection === 'wishes' || activeSection === 'album' ? '' : 'md:grid-cols-2'}`}>
-            {activeFieldsFiltered.map(([path, label, textarea]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} onChange={(value) => update(path, value)} />)}
+            {activeFieldsFiltered.map(([path, label, textarea, type]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} type={type} onChange={(value) => update(path, value)} />)}
             {activeSection === 'album' && renderAlbumUploadControls()}
             {activeSection === 'audio' && renderAudioPreview()}
             {activeSection === 'basic' ? (

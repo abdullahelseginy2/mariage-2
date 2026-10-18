@@ -117,6 +117,9 @@ const lines = (value) => String(value || '').split('\n').map((line) => line.trim
 export const createEmptyLoveMessageForm = (locale = 'en') => ({
   recipient_name: '',
   sender_name: '',
+  requester_name: '',
+  requester_whatsapp: '',
+  order_date: new Date().toISOString().slice(0, 10),
   public_path: '',
   locale,
   template: 'happy-message',

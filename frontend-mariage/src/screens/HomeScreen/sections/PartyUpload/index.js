@@ -145,6 +145,26 @@ const themeStyles = {
     progressBar: "bg-[#e6c387]",
     inputLabelClass: "text-white/80 font-bold",
     inputClass: "luxury-glass-input rounded-2xl border border-[#e6c387]/15 bg-white/3 text-white placeholder:text-white/30 focus:border-[#e6c387] focus:bg-white/6 focus:ring-[#e6c387]/20"
+  },
+  burgundy: {
+    sectionBg: "bg-[radial-gradient(circle_at_15%_10%,rgba(164,43,80,.22),transparent_28%),linear-gradient(145deg,#21020b,#4c091d_55%,#26030e)]",
+    border: "border-[#e8c78d]/24",
+    gradientFrom: "from-[#e8c78d]/8",
+    cardBg: "bg-[#2d0411]/80 backdrop-blur-xl",
+    cardBorder: "border-[#e8c78d]/28 shadow-[0_30px_70px_rgba(0,0,0,.28)]",
+    cardRoundness: "rounded-2xl",
+    previewRoundness: "rounded-xl",
+    textColor: "text-[#fff7ec]",
+    textSecondary: "text-[#fff0e4]/70",
+    kickerColor: "text-[#e8c78d]",
+    lineClass: "h-px w-24 mx-auto mt-5 bg-gradient-to-r from-transparent via-[#e8c78d] to-transparent",
+    buttonStyles: "rounded-xl bg-[#e8c78d] text-[#3a0616] hover:bg-[#fff0d3] active:bg-[#d9b470] shadow-[0_16px_38px_rgba(232,199,141,.18)] disabled:opacity-50",
+    cameraIcon: "text-[#e8c78d]/65 group-hover:text-[#e8c78d]",
+    dashedBorder: "rounded-xl border-[#e8c78d]/30 hover:border-[#e8c78d]/65",
+    inputBg: "bg-[#190108]/78",
+    progressBar: "bg-[#e8c78d]",
+    inputLabelClass: "text-[#fff0e4] font-black",
+    inputClass: "rounded-xl border-[#e8c78d]/25 bg-[#190108]/78 text-[#fff7ec] placeholder:text-[#fff0e4]/35 focus:border-[#e8c78d] focus:ring-[#e8c78d]/20"
   }
 };
 

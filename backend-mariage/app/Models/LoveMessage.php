@@ -13,6 +13,9 @@ class LoveMessage extends Model
     protected $fillable = [
         'code',
         'slug',
+        'requester_name',
+        'requester_whatsapp',
+        'order_date',
         'recipient_name',
         'sender_name',
         'is_published',
@@ -27,6 +30,7 @@ class LoveMessage extends Model
     {
         return [
             'is_published' => 'boolean',
+            'order_date' => 'date',
             'is_demo' => 'boolean',
             'content' => 'array',
         ];

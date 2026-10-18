@@ -31,6 +31,9 @@ const fields = {
     ['recipient_name', 'Recipient name'],
     ['sender_name', 'Sender name'],
     ['public_path', 'Eid route'],
+    ['requester_name', 'Requester Name (optional)'],
+    ['requester_whatsapp', 'WhatsApp Number (optional)', false, 'tel'],
+    ['order_date', 'Order Date (optional)', false, 'date'],
   ],
   hero: [
     ['content.hero.kicker', 'Kicker'],
@@ -263,7 +266,7 @@ const EidOverview = ({
   );
 };
 
-export default function EidGreetingsPage({ embedded = false, active = true }) {
+export default function EidGreetingsPage({ embedded = false, active = true, studioMode = false }) {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -353,6 +356,55 @@ export default function EidGreetingsPage({ embedded = false, active = true }) {
       }
     }
   }, [loadGreetings, embedded, active, view]);
+
+  useEffect(() => {
+    if (view !== 'eid-editor') return;
+    const isTemplatePreview = new URLSearchParams(location.search).get('templatePreview') === '1';
+    if (!isTemplatePreview) return;
+    const nextCode = createCode();
+    setSelected(null);
+    setCode(nextCode);
+    setRouteTouched(false);
+    setForm({
+      ...createEmptyEidForm('en'),
+      recipient_name: 'Someone Special',
+      sender_name: 'WIL Demo',
+      public_path: createPath('Someone Special', 'WIL Demo', nextCode),
+    });
+    setActiveSection('basic');
+    setStatus('Editing template demo data');
+  }, [location.search, view]);
+
+  useEffect(() => {
+    if (!studioMode || window.parent === window) return undefined;
+    window.parent.postMessage({
+      type: 'wil-template-preview-data',
+      category: 'eid',
+      data: serializeEidGreeting(form),
+    }, '*');
+    return undefined;
+  }, [form, studioMode]);
+
+  useEffect(() => {
+    if (!studioMode) return undefined;
+    const handleStudioMessage = (event) => {
+      if (event.data?.type !== 'wil-template-language') return;
+      const locale = event.data.locale === 'ar' ? 'ar' : 'en';
+      setForm((current) => ({
+        ...createEmptyEidForm(locale),
+        recipient_name: locale === 'ar' ? 'شخص مميز' : 'Someone Special',
+        sender_name: locale === 'ar' ? 'معاينة WIL' : 'WIL Demo',
+        public_path: current.public_path,
+        requester_name: current.requester_name,
+        requester_whatsapp: current.requester_whatsapp,
+        order_date: current.order_date,
+        font_family: current.font_family,
+        is_published: current.is_published,
+      }));
+    };
+    window.addEventListener('message', handleStudioMessage);
+    return () => window.removeEventListener('message', handleStudioMessage);
+  }, [studioMode]);
 
   const update = (path, value) => {
     if (path === 'public_path') setRouteTouched(true);
@@ -467,6 +519,9 @@ export default function EidGreetingsPage({ embedded = false, active = true }) {
             recipient_name: form.recipient_name,
             sender_name: form.sender_name,
             public_path: form.public_path,
+            requester_name: form.requester_name,
+            requester_whatsapp: form.requester_whatsapp,
+            order_date: form.order_date,
             font_family: form.font_family,
             is_published: form.is_published,
           })}
@@ -475,7 +530,7 @@ export default function EidGreetingsPage({ embedded = false, active = true }) {
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#263547] dark:bg-[#0b131c]">
         <nav className="overflow-x-auto border-b border-slate-100 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-[#101923]"><ol className="flex min-w-max items-center gap-2">{sections.map((section, index) => <li key={section.id} className="flex items-center gap-2"><button type="button" onClick={() => setActiveSection(section.id)} className={`grid min-h-12 grid-cols-[auto_1fr] items-center gap-2 rounded-lg border px-3 text-start text-sm font-black transition ${activeSection === section.id ? 'border-[#111820] bg-[#111820] text-white dark:border-gold dark:bg-gold dark:text-[#111820]' : 'border-slate-200 bg-white text-slate-500 dark:border-[#344458] dark:bg-[#0b131c] dark:text-slate-300'}`}><span className="grid h-7 w-7 place-items-center rounded-full text-xs">{index + 1}</span><span>{section.label}</span></button></li>)}</ol></nav>
         <div className={`grid gap-4 p-4 sm:p-5 ${activeSection === 'wishes' || activeSection === 'moments' ? '' : 'md:grid-cols-2'}`}>
-          {activeFields.map(([path, label, textarea]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} onChange={(value) => update(path, value)} />)}
+          {activeFields.map(([path, label, textarea, type]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} type={type} onChange={(value) => update(path, value)} />)}
           {activeSection === 'basic' ? <><FontFamilyPicker value={form.font_family} onChange={(value) => update('font_family', value)} /><label className="col-span-full flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500 dark:border-[#344458] dark:bg-[#101923] dark:text-slate-200 sm:w-fit"><input className="h-4 w-4 accent-[#D6B15C]" type="checkbox" checked={form.is_published} onChange={(event) => update('is_published', event.target.checked)} /> Published</label></> : null}
         </div>
       </div>
@@ -540,6 +595,9 @@ export default function EidGreetingsPage({ embedded = false, active = true }) {
                 recipient_name: form.recipient_name,
                 sender_name: form.sender_name,
                 public_path: form.public_path,
+                requester_name: form.requester_name,
+                requester_whatsapp: form.requester_whatsapp,
+                order_date: form.order_date,
                 font_family: form.font_family,
                 is_published: form.is_published,
               })}
@@ -548,7 +606,7 @@ export default function EidGreetingsPage({ embedded = false, active = true }) {
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#263547] dark:bg-[#0b131c]">
             <nav className="overflow-x-auto border-b border-slate-100 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-[#101923]"><ol className="flex min-w-max items-center gap-2">{sections.map((section, index) => <li key={section.id} className="flex items-center gap-2"><button type="button" onClick={() => setActiveSection(section.id)} className={`grid min-h-12 grid-cols-[auto_1fr] items-center gap-2 rounded-lg border px-3 text-start text-sm font-black transition ${activeSection === section.id ? 'border-[#111820] bg-[#111820] text-white dark:border-gold dark:bg-gold dark:text-[#111820]' : 'border-slate-200 bg-white text-slate-500 dark:border-[#344458] dark:bg-[#0b131c] dark:text-slate-300'}`}><span className="grid h-7 w-7 place-items-center rounded-full text-xs">{index + 1}</span><span>{section.label}</span></button></li>)}</ol></nav>
             <div className={`grid gap-4 p-4 sm:p-5 ${activeSection === 'wishes' || activeSection === 'moments' ? '' : 'md:grid-cols-2'}`}>
-              {activeFields.map(([path, label, textarea]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} onChange={(value) => update(path, value)} />)}
+              {activeFields.map(([path, label, textarea, type]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} type={type} onChange={(value) => update(path, value)} />)}
               {activeSection === 'basic' ? <><FontFamilyPicker value={form.font_family} onChange={(value) => update('font_family', value)} /><label className="col-span-full flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500 dark:border-[#344458] dark:bg-[#101923] dark:text-slate-200 sm:w-fit"><input className="h-4 w-4 accent-[#D6B15C]" type="checkbox" checked={form.is_published} onChange={(event) => update('is_published', event.target.checked)} /> Published</label></> : null}
             </div>
           </div>
@@ -609,6 +667,9 @@ export default function EidGreetingsPage({ embedded = false, active = true }) {
               recipient_name: form.recipient_name,
               sender_name: form.sender_name,
               public_path: form.public_path,
+              requester_name: form.requester_name,
+              requester_whatsapp: form.requester_whatsapp,
+              order_date: form.order_date,
               font_family: form.font_family,
               is_published: form.is_published,
             })}
@@ -617,7 +678,7 @@ export default function EidGreetingsPage({ embedded = false, active = true }) {
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-[#263547] dark:bg-[#0b131c]">
           <nav className="overflow-x-auto border-b border-slate-100 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-[#101923]"><ol className="flex min-w-max items-center gap-2">{sections.map((section, index) => <li key={section.id} className="flex items-center gap-2"><button type="button" onClick={() => setActiveSection(section.id)} className={`grid min-h-12 grid-cols-[auto_1fr] items-center gap-2 rounded-lg border px-3 text-start text-sm font-black transition ${activeSection === section.id ? 'border-[#111820] bg-[#111820] text-white dark:border-gold dark:bg-gold dark:text-[#111820]' : 'border-slate-200 bg-white text-slate-500 dark:border-[#344458] dark:bg-[#0b131c] dark:text-slate-300'}`}><span className="grid h-7 w-7 place-items-center rounded-full text-xs">{index + 1}</span><span>{section.label}</span></button></li>)}</ol></nav>
           <div className={`grid gap-4 p-4 sm:p-5 ${activeSection === 'wishes' || activeSection === 'moments' ? '' : 'md:grid-cols-2'}`}>
-            {activeFields.map(([path, label, textarea]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} onChange={(value) => update(path, value)} />)}
+            {activeFields.map(([path, label, textarea, type]) => <Field key={path} label={label} value={getValue(form, path)} textarea={textarea} type={type} onChange={(value) => update(path, value)} />)}
             {activeSection === 'basic' ? <><FontFamilyPicker value={form.font_family} onChange={(value) => update('font_family', value)} /><label className="col-span-full flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 text-xs font-black uppercase tracking-[0.14em] text-slate-500 dark:border-[#344458] dark:bg-[#101923] dark:text-slate-200 sm:w-fit"><input className="h-4 w-4 accent-[#D6B15C]" type="checkbox" checked={form.is_published} onChange={(event) => update('is_published', event.target.checked)} /> Published</label></> : null}
           </div>
         </div>

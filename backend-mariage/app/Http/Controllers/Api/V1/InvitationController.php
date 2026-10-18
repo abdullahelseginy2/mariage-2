@@ -33,6 +33,9 @@ class InvitationController extends Controller
             'id',
             'code',
             'slug',
+            'requester_name',
+            'requester_whatsapp',
+            'order_date',
             'groom_name',
             'bride_name',
             'couple_display_name',
@@ -56,6 +59,8 @@ class InvitationController extends Controller
                 $q->where('groom_name', 'like', $search)
                   ->orWhere('bride_name', 'like', $search)
                   ->orWhere('couple_display_name', 'like', $search)
+                  ->orWhere('requester_name', 'like', $search)
+                  ->orWhere('requester_whatsapp', 'like', $search)
                   ->orWhere('slug', 'like', $search)
                   ->orWhere('code', 'like', $search);
             });
@@ -79,7 +84,7 @@ class InvitationController extends Controller
         }
 
         if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->input('date'));
+            $query->whereDate('order_date', $request->input('date'));
         }
 
         $sort = $request->input('sort', 'latest');
@@ -152,6 +157,9 @@ class InvitationController extends Controller
             'groom_name' => $this->decodeMaybeJson($invitation['groom_name'] ?? ''),
             'bride_name' => $this->decodeMaybeJson($invitation['bride_name'] ?? ''),
             'couple_display_name' => $this->decodeMaybeJson($invitation['couple_display_name'] ?? ''),
+            'requester_name' => $invitation['requester_name'] ?? null,
+            'requester_whatsapp' => $invitation['requester_whatsapp'] ?? null,
+            'order_date' => $invitation['order_date'] ?? null,
             'is_published' => (bool) ($invitation['is_published'] ?? false),
             'template' => $invitation['template'] ?? 'classic',
             'locale' => $invitation['locale'] ?? 'en',
@@ -401,12 +409,22 @@ class InvitationController extends Controller
                 'footer',
                 'audio',
                 'party_upload',
+                'font_sizes',
                 'organizer_username',
                 'organizer_password',
             ]),
             'groom_name' => $this->encodeLocalizedName($groomNames),
             'bride_name' => $this->encodeLocalizedName($brideNames),
             'couple_display_name' => $this->normalizeDisplayName($validated['couple_display_name'] ?? null, "{$groomName} & {$brideName}"),
+            'requester_name' => array_key_exists('requester_name', $validated)
+                ? (filled($validated['requester_name'])
+                    ? trim((string) $validated['requester_name'])
+                    : "{$groomName} & {$brideName}")
+                : ($invitation?->requester_name ?: "{$groomName} & {$brideName}"),
+            'requester_whatsapp' => array_key_exists('requester_whatsapp', $validated)
+                ? (filled($validated['requester_whatsapp']) ? trim((string) $validated['requester_whatsapp']) : null)
+                : $invitation?->requester_whatsapp,
+            'order_date' => $validated['order_date'] ?? $invitation?->order_date ?? now()->toDateString(),
             'is_published' => $validated['is_published'] ?? true,
             'template' => $validated['template'] ?? $invitation?->template ?? 'classic',
             'locale' => $validated['locale'] ?? $invitation?->locale ?? 'en',

@@ -131,7 +131,8 @@
       "empty": "لا توجد دعوات بعد. أنشئ أول دعوة للبدء.",
       "past_invitations": "الدعوات السابقة",
       "completed_work": "النماذج المنجزة",
-      "completed_work_desc": "إدارة جميع النماذج والدعوات المنجزة سابقاً"
+      "completed_work_desc": "إدارة جميع النماذج والدعوات المنجزة سابقاً",
+      "templates_gallery": "القوالب"
     },
     "header": {
       "kicker": "لوحة الدعوات",
@@ -284,7 +285,9 @@
       "five": "Floral Butterfly",
       "five_description": "White floral garden design with a blooming entrance, flying butterflies, soft flower colors, gallery, details, and RSVP.",
       "six": "التصميم البسيط الحديث (Modern Minimal)",
-      "six_description": "تصميم أنيق وبسيط باللون الداكن مع لمسات ذهبية/بيج وبطاقات زجاجية، وخطوط متميزة وتفاعلات ناعمة وجذابة."
+      "six_description": "تصميم أنيق وبسيط باللون الداكن مع لمسات ذهبية/بيج وبطاقات زجاجية، وخطوط متميزة وتفاعلات ناعمة وجذابة.",
+      "burgundy": "رومانسية البرجاندي",
+      "burgundy_description": "افتتاحية سينمائية بعلبة الخاتم وفيديو صامت، مع مخمل برجاندي وتفاصيل شامبين وتجربة زفاف متكاملة."
     },
     "eid": {
       "sidebar": "تهاني العيد",
